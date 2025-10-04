@@ -927,6 +927,57 @@ function tEe_RocK_display_free_throw_menu() {
     y_position = 50;
     print(2, y_position, OLED_FONT_SMALL, OLED_WHITE, tEe_RocK_FreeThrowInfo[0]);
 }
+function process_shot_input(int shot_button, int stick_direction, int rhythm_combo, int manual_combo) {
+    if (Rock_Tee_fades_enabled) {
+        if (get_val(shot_button)) {
+            set_val(shot_button, 0);
+            if (get_ptime(shot_button) >= Rock_Tee_fades_threshold) {
+                if (!Rock_Tee_manual_shot_triggered) {
+                    Rock_Tee_manual_shot_triggered = TRUE;
+                    Rock_Tee_manual_shot_active = TRUE;
+                    set_rgb(255, 0, 255);
+                }
+                set_val(PS4_RY, stick_direction);
+            } else {
+                set_rgb(0, 255, 255);
+            }
+        }
+        else if (event_release(shot_button)) {
+            if (get_ptime(shot_button) < Rock_Tee_fades_threshold) {
+                if (Rock_Tee_auto_green_enabled) {
+                    set_rgb(0, 255, 0);
+                    combo_run(rhythm_combo);
+                } else {
+                    set_rgb(0, 0, 0);
+                    combo_run(manual_combo);
+                }
+            } else if (Rock_Tee_manual_shot_triggered) {
+                combo_run(manual_combo);
+            }
+            Rock_Tee_manual_shot_triggered = FALSE;
+            Rock_Tee_manual_shot_active = FALSE;
+        }
+    } else {
+        if (Rock_Tee_auto_green_enabled) {
+            if (event_press(shot_button)) {
+                combo_run(rhythm_combo);
+            }
+        } else {
+            if (get_val(shot_button)) {
+                set_val(shot_button, 0);
+                set_val(PS4_RY, stick_direction);
+                Rock_Tee_manual_shot_triggered = TRUE;
+                Rock_Tee_manual_shot_active = TRUE;
+                set_rgb(0, 255, 255);
+            }
+            else if (event_release(shot_button) && Rock_Tee_manual_shot_triggered) {
+                Rock_Tee_manual_shot_triggered = FALSE;
+                Rock_Tee_manual_shot_active = FALSE;
+                combo_run(manual_combo);
+            }
+        }
+    }
+}
 function handle_shot_timing() {
     if (DisplayMenu) return;
     if (get_val(PS4_R1)) return;
@@ -1003,211 +1054,17 @@ function handle_shot_timing() {
     }
     if (Rock_Tee_shot_enabled && get_val(PS4_R2) >= 99 && r0cKTeE_square_dunk_enabled && r0cKTeE_square_dunk_trigger_button == 1) {
         if (Rock_Tee_shot_trigger_button == 0) {
-            if (Rock_Tee_fades_enabled && Rock_Tee_auto_green_enabled) {
-                if (get_val(PS4_SQUARE)) {
-                    set_val(PS4_SQUARE, 0);
-                    if (get_ptime(PS4_SQUARE) >= Rock_Tee_fades_threshold) {
-                        if (!Rock_Tee_manual_shot_triggered) {
-                            Rock_Tee_manual_shot_triggered = TRUE;
-                            Rock_Tee_manual_shot_active = TRUE;
-                            set_rgb(255, 0, 255);
-                        }
-                        set_val(PS4_RY, -100);
-                    } else {
-                        set_rgb(0, 255, 255);
-                    }
-                }
-                else if (event_release(PS4_SQUARE)) {
-                    if (get_ptime(PS4_SQUARE) < Rock_Tee_fades_threshold) {
-                        set_rgb(0, 255, 0);
-                        combo_run(Rock_Tee_R2_rhythm_shot_combo);
-                    } else if (Rock_Tee_manual_shot_triggered) {
-                        combo_run(Rock_Tee_R2_manual_rhythm_shot_combo);
-                    }
-                    Rock_Tee_manual_shot_triggered = FALSE;
-                    Rock_Tee_manual_shot_active = FALSE;
-                }
-            } else if (Rock_Tee_fades_enabled && !Rock_Tee_auto_green_enabled) {
-                if (get_val(PS4_SQUARE)) {
-                    set_val(PS4_SQUARE, 0);
-                    set_val(PS4_RY, -100);
-                    set_rgb(0, 255, 255);
-                }
-                else if (event_release(PS4_SQUARE)) {
-                    combo_run(Rock_Tee_R2_manual_rhythm_shot_combo);
-                }
-            } else if (!Rock_Tee_fades_enabled && Rock_Tee_auto_green_enabled) {
-                if (event_press(PS4_SQUARE)) {
-                    combo_run(Rock_Tee_R2_rhythm_shot_combo);
-                }
-            } else if (!Rock_Tee_fades_enabled && !Rock_Tee_auto_green_enabled) {
-                if (get_val(PS4_SQUARE)) {
-                    set_val(PS4_SQUARE, 0);
-                    set_val(PS4_RY, -100);
-                    set_rgb(0, 255, 255);
-                }
-                else if (event_release(PS4_SQUARE)) {
-                    combo_run(Rock_Tee_R2_manual_rhythm_shot_combo);
-                }
-            }
+            process_shot_input(PS4_SQUARE, -100, Rock_Tee_R2_rhythm_shot_combo, Rock_Tee_R2_manual_rhythm_shot_combo);
         } else if (Rock_Tee_shot_trigger_button == 1) {
-            if (Rock_Tee_fades_enabled && Rock_Tee_auto_green_enabled) {
-                if (get_val(PS4_L1)) {
-                    set_val(PS4_L1, 0);
-                    if (get_ptime(PS4_L1) >= Rock_Tee_fades_threshold) {
-                        if (!Rock_Tee_manual_shot_triggered) {
-                            Rock_Tee_manual_shot_triggered = TRUE;
-                            Rock_Tee_manual_shot_active = TRUE;
-                            set_rgb(255, 0, 255);
-                        }
-                        set_val(PS4_RY, -100);
-                    } else {
-                        set_rgb(0, 255, 255);
-                    }
-                }
-                else if (event_release(PS4_L1)) {
-                    if (get_ptime(PS4_L1) < Rock_Tee_fades_threshold) {
-                        set_rgb(0, 255, 0);
-                        combo_run(Rock_Tee_R2_rhythm_shot_combo);
-                    } else if (Rock_Tee_manual_shot_triggered) {
-                        combo_run(Rock_Tee_R2_manual_rhythm_shot_combo);
-                    }
-                    Rock_Tee_manual_shot_triggered = FALSE;
-                    Rock_Tee_manual_shot_active = FALSE;
-                }
-            } else if (Rock_Tee_fades_enabled && !Rock_Tee_auto_green_enabled) {
-                if (get_val(PS4_L1)) {
-                    set_val(PS4_L1, 0);
-                    set_val(PS4_RY, -100);
-                    set_rgb(0, 255, 255);
-                }
-                else if (event_release(PS4_L1)) {
-                    combo_run(Rock_Tee_R2_manual_rhythm_shot_combo);
-                }
-            } else if (!Rock_Tee_fades_enabled && Rock_Tee_auto_green_enabled) {
-                if (event_press(PS4_L1)) {
-                    combo_run(Rock_Tee_R2_rhythm_shot_combo);
-                }
-            } else if (!Rock_Tee_fades_enabled && !Rock_Tee_auto_green_enabled) {
-                if (get_val(PS4_L1)) {
-                    set_val(PS4_L1, 0);
-                    set_val(PS4_RY, -100);
-                    set_rgb(0, 255, 255);
-                }
-                else if (event_release(PS4_L1)) {
-                    combo_run(Rock_Tee_R2_manual_rhythm_shot_combo);
-                }
-            }
+            process_shot_input(PS4_L1, -100, Rock_Tee_R2_rhythm_shot_combo, Rock_Tee_R2_manual_rhythm_shot_combo);
         }
         return;
     }
     if (Rock_Tee_shot_enabled && (!get_val(PS4_R2) || (r0cKTeE_square_dunk_enabled && r0cKTeE_square_dunk_trigger_button == 1))) {
         if (Rock_Tee_shot_trigger_button == 0) {
-            if (Rock_Tee_fades_enabled && Rock_Tee_auto_green_enabled) {
-                if (get_val(PS4_SQUARE)) {
-                    set_val(PS4_SQUARE, 0);
-                    if (get_ptime(PS4_SQUARE) >= Rock_Tee_fades_threshold) {
-                        if (!Rock_Tee_manual_shot_triggered) {
-                            Rock_Tee_manual_shot_triggered = TRUE;
-                            Rock_Tee_manual_shot_active = TRUE;
-                            set_rgb(255, 0, 255);
-                        }
-                        set_val(PS4_RY, 100);
-                    } else {
-                        set_rgb(0, 255, 255);
-                    }
-                }
-                else if (event_release(PS4_SQUARE)) {
-                    if (get_ptime(PS4_SQUARE) < Rock_Tee_fades_threshold) {
-                        set_rgb(0, 255, 0);
-                        combo_run(Rock_Tee_rhythm_shot_combo);
-                    } else if (Rock_Tee_manual_shot_triggered) {
-                        combo_run(Rock_Tee_manual_rhythm_shot_combo);
-                    }
-                    Rock_Tee_manual_shot_triggered = FALSE;
-                    Rock_Tee_manual_shot_active = FALSE;
-                }
-            } else if (Rock_Tee_fades_enabled && !Rock_Tee_auto_green_enabled) {
-                if (get_val(PS4_SQUARE)) {
-                    set_val(PS4_SQUARE, 0);
-                    set_val(PS4_RY, 100);
-                    set_rgb(0, 255, 255);
-                }
-                else if (event_release(PS4_SQUARE)) {
-                    set_rgb(0, 0, 0);
-                    combo_run(Rock_Tee_manual_rhythm_shot_combo);
-                }
-            } else if (Rock_Tee_auto_green_enabled) {
-                if (event_press(PS4_SQUARE)) {
-                    combo_run(Rock_Tee_rhythm_shot_combo);
-                }
-            } else {
-                if (get_val(PS4_SQUARE)) {
-                    set_val(PS4_SQUARE, 0);
-                    set_val(PS4_RY, 100);
-                    Rock_Tee_manual_shot_triggered = TRUE;
-                    Rock_Tee_manual_shot_active = TRUE;
-                    set_rgb(0, 255, 255);
-                }
-                else if (event_release(PS4_SQUARE) && Rock_Tee_manual_shot_triggered) {
-                    Rock_Tee_manual_shot_triggered = FALSE;
-                    Rock_Tee_manual_shot_active = FALSE;
-                    combo_run(Rock_Tee_manual_rhythm_shot_combo);
-                }
-            }
+            process_shot_input(PS4_SQUARE, 100, Rock_Tee_rhythm_shot_combo, Rock_Tee_manual_rhythm_shot_combo);
         } else if (Rock_Tee_shot_trigger_button == 1) {
-            if (Rock_Tee_fades_enabled && Rock_Tee_auto_green_enabled) {
-                if (get_val(PS4_L1)) {
-                    set_val(PS4_L1, 0);
-                    if (get_ptime(PS4_L1) >= Rock_Tee_fades_threshold) {
-                        if (!Rock_Tee_manual_shot_triggered) {
-                            Rock_Tee_manual_shot_triggered = TRUE;
-                            Rock_Tee_manual_shot_active = TRUE;
-                            set_rgb(255, 0, 255);
-                        }
-                        set_val(PS4_RY, 100);
-                    } else {
-                        set_rgb(0, 255, 255);
-                    }
-                }
-                else if (event_release(PS4_L1)) {
-                    if (get_ptime(PS4_L1) < Rock_Tee_fades_threshold) {
-                        set_rgb(0, 255, 0);
-                        combo_run(Rock_Tee_rhythm_shot_combo);
-                    } else if (Rock_Tee_manual_shot_triggered) {
-                        combo_run(Rock_Tee_manual_rhythm_shot_combo);
-                    }
-                    Rock_Tee_manual_shot_triggered = FALSE;
-                    Rock_Tee_manual_shot_active = FALSE;
-                }
-            } else if (Rock_Tee_fades_enabled && !Rock_Tee_auto_green_enabled) {
-                if (get_val(PS4_L1)) {
-                    set_val(PS4_L1, 0);
-                    set_val(PS4_RY, 100);
-                    set_rgb(0, 255, 255);
-                }
-                else if (event_release(PS4_L1)) {
-                    set_rgb(0, 0, 0);
-                    combo_run(Rock_Tee_manual_rhythm_shot_combo);
-                }
-            } else if (Rock_Tee_auto_green_enabled) {
-                if (event_press(PS4_L1)) {
-                    combo_run(Rock_Tee_rhythm_shot_combo);
-                }
-            } else {
-                if (get_val(PS4_L1)) {
-                    set_val(PS4_L1, 0);
-                    set_val(PS4_RY, 100);
-                    Rock_Tee_manual_shot_triggered = TRUE;
-                    Rock_Tee_manual_shot_active = TRUE;
-                    set_rgb(0, 255, 255);
-                }
-                else if (event_release(PS4_L1) && Rock_Tee_manual_shot_triggered) {
-                    Rock_Tee_manual_shot_triggered = FALSE;
-                    Rock_Tee_manual_shot_active = FALSE;
-                    combo_run(Rock_Tee_manual_rhythm_shot_combo);
-                }
-            }
+            process_shot_input(PS4_L1, 100, Rock_Tee_rhythm_shot_combo, Rock_Tee_manual_rhythm_shot_combo);
         }
     }
 }
@@ -1302,32 +1159,20 @@ function input_blocks() {
         }
         else if (Rock_Tee_shot_enabled && (!get_val(PS4_R2) || (r0cKTeE_square_dunk_enabled && r0cKTeE_square_dunk_trigger_button == 1))) {
             if (Rock_Tee_shot_trigger_button == 0) {
-                if (Rock_Tee_auto_green_enabled && !Rock_Tee_fades_enabled) {
+                if (Rock_Tee_fades_enabled || Rock_Tee_auto_green_enabled) {
                     if (get_val(PS4_SQUARE)) {
                         set_val(PS4_SQUARE, 0);
                     }
-                } else if (!Rock_Tee_auto_green_enabled && !Rock_Tee_fades_enabled) {
-                    if (get_val(PS4_SQUARE) && !Rock_Tee_manual_shot_active) {
-                        set_val(PS4_SQUARE, 0);
-                    }
-                } else if (Rock_Tee_fades_enabled) {
-                    if (get_val(PS4_SQUARE)) {
-                        set_val(PS4_SQUARE, 0);
-                    }
+                } else if (!Rock_Tee_manual_shot_active && get_val(PS4_SQUARE)) {
+                    set_val(PS4_SQUARE, 0);
                 }
             } else if (Rock_Tee_shot_trigger_button == 1) {
-                if (Rock_Tee_auto_green_enabled && !Rock_Tee_fades_enabled) {
+                if (Rock_Tee_fades_enabled || Rock_Tee_auto_green_enabled) {
                     if (get_val(PS4_L1)) {
                         set_val(PS4_L1, 0);
                     }
-                } else if (!Rock_Tee_auto_green_enabled && !Rock_Tee_fades_enabled) {
-                    if (get_val(PS4_L1) && !Rock_Tee_manual_shot_active) {
-                        set_val(PS4_L1, 0);
-                    }
-                } else if (Rock_Tee_fades_enabled) {
-                    if (get_val(PS4_L1)) {
-                        set_val(PS4_L1, 0);
-                    }
+                } else if (!Rock_Tee_manual_shot_active && get_val(PS4_L1)) {
+                    set_val(PS4_L1, 0);
                 }
             }
         }
